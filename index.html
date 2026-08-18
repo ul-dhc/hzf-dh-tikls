@@ -1,0 +1,371 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>HZF digitālo humanitāro zinātņu aktivitāšu tīkls</title>
+<style>
+  :root{--dept:#8b1e3f;--act:#f59e0b;--kw:#10b981;--rel:#d946ef;--bg:#f7f8fa;--panel:#fff;--ink:#1f2937;--muted:#6b7280;--border:#e5e7eb;}
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--ink);background:var(--bg)}
+  #app{display:flex;height:100vh;overflow:hidden}
+  #sidebar,#rpanel{width:300px;min-width:300px;background:var(--panel);display:flex;flex-direction:column;overflow-y:auto}
+  #sidebar{border-right:1px solid var(--border)} #rpanel{border-left:1px solid var(--border)}
+  #sidebar h1{font-size:15px;margin:0;padding:16px 16px 4px;line-height:1.3}
+  #sidebar .sub{font-size:12px;color:var(--muted);padding:0 16px 12px}
+  .section{padding:12px 16px;border-top:1px solid var(--border)}
+  .section h2{font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);margin:0 0 8px}
+  .toggle{display:flex;align-items:center;gap:8px;font-size:13px;padding:3px 0;cursor:pointer}
+  .swatch{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+  .swatch.diamond{border-radius:2px;transform:rotate(45deg)}
+  .swatch.line{width:18px;height:0;border-radius:0;border-top:2px dashed var(--rel)}
+  .count{margin-left:auto;color:var(--muted);font-size:11px}
+  select,input[type=text]{width:100%;padding:7px 8px;border:1px solid var(--border);border-radius:6px;font-size:13px;background:#fff;color:var(--ink)}
+  .btn{width:100%;padding:8px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:13px;margin-top:8px}
+  .btn:hover{background:#f3f4f6}
+  #main{flex:1;position:relative;min-width:0}
+  #net{width:100%;height:100%;display:block;cursor:grab} #net.grabbing{cursor:grabbing}
+  #details{position:absolute;right:16px;top:16px;width:290px;max-height:calc(100% - 32px);overflow-y:auto;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;box-shadow:0 6px 24px rgba(0,0,0,.12);display:none;font-size:13px;z-index:6}
+  #details h3{margin:0 0 4px;font-size:14px;line-height:1.3}
+  #details .tag{display:inline-block;font-size:11px;padding:2px 8px;border-radius:20px;color:#fff;margin-bottom:8px}
+  #details ul{margin:6px 0 0;padding-left:18px} #details li{margin:2px 0}
+  #details .close{float:right;cursor:pointer;color:var(--muted);font-size:18px;line-height:1;margin:-4px -4px 0 0}
+  .grp{font-weight:600;margin-top:8px;font-size:12px;color:var(--muted)}
+  #tooltip{position:absolute;pointer-events:none;background:#111827;color:#fff;font-size:12px;padding:5px 8px;border-radius:6px;display:none;max-width:280px;z-index:7}
+  #hint{position:absolute;left:16px;bottom:14px;font-size:11px;color:var(--muted);background:rgba(255,255,255,.85);padding:6px 10px;border-radius:6px}
+  #zoom{position:absolute;left:16px;top:16px;display:flex;gap:6px}
+  #zoom button{width:30px;height:30px;border:1px solid var(--border);background:#fff;border-radius:6px;cursor:pointer;font-size:16px}
+  #rpanel .rhead{padding:14px 16px 8px;position:sticky;top:0;background:var(--panel);border-bottom:1px solid var(--border);z-index:2}
+  #rpanel .rhead h2{font-size:13px;margin:0 0 8px}
+  #listBody{padding:6px 10px 30px}
+  .lg{margin:2px 0;border:1px solid var(--border);border-radius:8px;overflow:hidden}
+  .lg>summary{list-style:none;cursor:pointer;padding:8px 10px;font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px;background:#fafafa}
+  .lg>summary::-webkit-details-marker{display:none}
+  .lg>summary .gc{margin-left:auto;color:var(--muted);font-weight:400;font-size:11px}
+  .lg .li{padding:6px 10px 6px 12px;font-size:12.5px;border-top:1px solid var(--border);cursor:pointer;display:flex;gap:7px;align-items:flex-start;line-height:1.3}
+  .lg .li:hover{background:#f1f5f9}
+  .dot{width:9px;height:9px;border-radius:50%;flex:0 0 auto;margin-top:3px}
+  .gswatch{width:11px;height:11px;border-radius:50%;flex:0 0 auto}.gswatch.diamond{border-radius:2px;transform:rotate(45deg)}
+  #collapseR{cursor:pointer;color:var(--muted);font-size:13px;border:1px solid var(--border);background:#fff;border-radius:6px;padding:2px 7px}
+  #reopenR{position:absolute;right:0;top:16px;display:none;z-index:6;border:1px solid var(--border);border-right:none;background:#fff;border-radius:8px 0 0 8px;padding:8px 6px;cursor:pointer;font-size:12px;writing-mode:vertical-rl}
+  /* --- loading / error overlay --- */
+  #loader{position:fixed;inset:0;background:var(--bg);display:flex;align-items:center;justify-content:center;z-index:50}
+  #loader .lbox{max-width:460px;text-align:center;padding:24px;font-size:14px;color:var(--ink)}
+  #loader .spin{width:34px;height:34px;border:3px solid var(--border);border-top-color:var(--dept);border-radius:50%;margin:0 auto 14px;animation:sp 0.8s linear infinite}
+  @keyframes sp{to{transform:rotate(360deg)}}
+  #loader.err .spin{display:none}
+  #loader .lmsg{line-height:1.5}
+  #loader .lmsg small{color:var(--muted);word-break:break-word}
+  #loader .retry{margin-top:16px;padding:8px 16px;border:1px solid var(--border);border-radius:6px;background:#fff;cursor:pointer;font-size:13px;display:none}
+  #loader.err .retry{display:inline-block}
+</style>
+</head>
+<body>
+<div id="loader"><div class="lbox"><div class="spin"></div><div class="lmsg" id="loadmsg">Ielādē datus no Google izklājlapas…</div><button class="retry" id="retryBtn" onclick="location.reload()">Mēģināt vēlreiz</button></div></div>
+<div id="app">
+  <div id="sidebar">
+    <h1>HZF digitālo humanitāro zinātņu aktivitāšu tīkls</h1>
+    <div class="sub">Struktūrvienības · aktivitātes · DH tēmas</div>
+    <div class="section"><h2>Izkārtojums</h2>
+      <label class="toggle"><input type="radio" name="layout" value="hier" checked> Hierarhisks (vertikāls)</label>
+      <label class="toggle"><input type="radio" name="layout" value="force"> Spēka (brīvs)</label>
+    </div>
+    <div class="section"><h2>Mezglu veidi</h2>
+      <label class="toggle"><input type="checkbox" id="t-dept" checked><span class="swatch diamond" style="background:var(--dept)"></span>Struktūrvienības<span class="count" id="c-dept"></span></label>
+      <label class="toggle"><input type="checkbox" id="t-act" checked><span class="swatch" style="background:linear-gradient(135deg,#f59e0b,#0ea5e9,#8b5cf6,#ec4899,#14b8a6)"></span>Aktivitātes (pēc veida)<span class="count" id="c-act"></span></label>
+      <label class="toggle"><input type="checkbox" id="t-kw" checked><span class="swatch" style="background:var(--kw)"></span>Tēmas<span class="count" id="c-kw"></span></label>
+    </div>
+    <div class="section"><h2>Saiknes</h2>
+      <label class="toggle"><input type="checkbox" id="t-rel" checked><span class="swatch line"></span>Projektu saiknes<span class="count" id="c-rel"></span></label>
+      <div style="font-size:11px;color:var(--muted);margin-top:4px">resurss / kurss → projekts</div>
+    </div>
+    <div class="section"><h2>Aktivitātes veids</h2><div id="typeFilters"></div></div>
+    <div class="section"><h2>Fokuss uz struktūrvienību</h2><select id="deptFocus"><option value="all">— visas struktūrvienības —</option></select></div>
+    <div class="section"><button class="btn" id="reset" style="margin-top:0">Atiestatīt skatu</button></div>
+  </div>
+  <div id="main">
+    <canvas id="net"></canvas>
+    <div id="zoom"><button id="zin">+</button><button id="zout">−</button><button id="zfit" title="Ietilpināt">⊡</button></div>
+    <div id="details"></div><div id="tooltip"></div>
+    <div id="hint">Klikšķis uz mezgla = izcelt saiknes · ritiniet, lai tuvinātu · velciet mezglus vai fonu</div>
+    <div id="reopenR">Saraksts</div>
+  </div>
+  <div id="rpanel">
+    <div class="rhead"><h2 style="display:flex;align-items:center;gap:8px">Aktivitāšu saraksts <button id="collapseR" title="Slēpt">⟩</button></h2>
+      <select id="groupBy"><option value="dept">grupēt pēc struktūrvienības</option><option value="type">grupēt pēc aktivitātes veida</option><option value="kw">grupēt pēc tēmas</option></select>
+    </div>
+    <div id="listBody"></div>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  SHEET_ID: "1PjPUJnSYBm_-j37nFKTlMeM-2KnkynRl",
+  TABS: ["Projekti", "Digitālie resursi", "Studiju kursi", "Citas aktivitātes", "Dalība organizācijās"]
+};
+</script>
+
+<script>
+(function (global) {
+  'use strict';
+  var SHEETS = [
+    { tab: 'Projekti',              type: 'Projekts',            nameCol: 'Projekta nosaukums (LV)', kwCol: 'DH atslēgvārdi', urlCol: 'Saite', relCol: null,                                 isProject: true },
+    { tab: 'Digitālie resursi',     type: 'Digitālais resurss',  nameCol: 'Resursa nosaukums (LV)',  kwCol: 'DH atslēgvārdi', urlCol: 'Saite', relCol: 'Saistītie projekti' },
+    { tab: 'Studiju kursi',         type: 'Studiju kurss',       nameCol: 'Kursa nosaukums',         kwCol: 'DH atslēgvārdi', urlCol: null,    relCol: 'Saistītie projekti / aktivitātes' },
+    { tab: 'Citas aktivitātes',     type: 'Cita aktivitāte',     nameCol: 'Aktivitātes nosaukums',   kwCol: 'DH atslēgvārdi', urlCol: null,    relCol: null },
+    { tab: 'Dalība organizācijās',  type: 'Dalība organizācijā', nameCol: 'Organizācijas nosaukums', kwCol: null,             urlCol: null,    relCol: null }
+  ];
+  var DEPT_COL = 'Struktūrvienība';
+  function clean(s) {
+    if (s === null || s === undefined) return '';
+    return String(s).replace(/ /g, ' ').replace(/^\s+|\s+$/g, '');
+  }
+  function splitList(s) {
+    return clean(s).split(',').map(clean).filter(function (x) { return x.length > 0; });
+  }
+  function normMatch(s) { return clean(s).toLowerCase().replace(/\s+/g, ' '); }
+  function coreTitle(name) {
+    return clean(name).replace(/\s*\([^()]*\)\s*$/, '').replace(/^\s+|\s+$/g, '');
+  }
+  function parseCSV(text) {
+    var rows = [], row = [], field = '', i = 0, inQ = false, c;
+    text = String(text).replace(/^﻿/, '');
+    while (i < text.length) {
+      c = text[i];
+      if (inQ) {
+        if (c === '"') { if (text[i + 1] === '"') { field += '"'; i += 2; continue; } inQ = false; i++; continue; }
+        field += c; i++; continue;
+      }
+      if (c === '"') { inQ = true; i++; continue; }
+      if (c === ',') { row.push(field); field = ''; i++; continue; }
+      if (c === '\r') { i++; continue; }
+      if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; i++; continue; }
+      field += c; i++;
+    }
+    if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+    return rows;
+  }
+  function headerIndex(rows) {
+    for (var r = 0; r < rows.length; r++)
+      for (var c = 0; c < rows[r].length; c++)
+        if (clean(rows[r][c]) === DEPT_COL) return r;
+    return -1;
+  }
+  function build(csvByTab) {
+    var RAW = [], meta = [], warnings = [];
+    SHEETS.forEach(function (S) {
+      var csv = csvByTab[S.tab];
+      if (csv == null) { warnings.push('Missing tab: ' + S.tab); return; }
+      var rows = parseCSV(csv);
+      var h = headerIndex(rows);
+      if (h < 0) { warnings.push('No header row in tab: ' + S.tab); return; }
+      var header = rows[h].map(clean), colOf = {};
+      header.forEach(function (name, idx) { if (!(name in colOf)) colOf[name] = idx; });
+      function need(colName) {
+        if (colName == null) return -1;
+        if (!(colName in colOf)) { warnings.push('Tab "' + S.tab + '": missing column "' + colName + '"'); return -1; }
+        return colOf[colName];
+      }
+      var ci = { name: need(S.nameCol), dept: need(DEPT_COL), kw: S.kwCol ? need(S.kwCol) : -1, url: S.urlCol ? need(S.urlCol) : -1, rel: S.relCol ? need(S.relCol) : -1 };
+      if (ci.name < 0) return;
+      for (var r = h + 1; r < rows.length; r++) {
+        var row = rows[r], nm = clean(row[ci.name]);
+        if (!nm) continue;
+        RAW.push({ name: nm, type: S.type, depts: ci.dept >= 0 ? splitList(row[ci.dept]) : [], kws: ci.kw >= 0 ? splitList(row[ci.kw]) : [], url: ci.url >= 0 ? clean(row[ci.url]) : '' });
+        meta.push({ relText: ci.rel >= 0 ? clean(row[ci.rel]) : '' });
+      }
+    });
+    var projects = [];
+    RAW.forEach(function (a, gi) { if (a.type === 'Projekts') projects.push({ gi: gi, core: normMatch(coreTitle(a.name)) }); });
+    var REL = [];
+    RAW.forEach(function (a, gi) {
+      var t = normMatch(meta[gi].relText);
+      if (!t) return;
+      projects.forEach(function (p) { if (p.core && t.indexOf(p.core) !== -1) REL.push([gi, p.gi]); });
+    });
+    return { RAW: RAW, REL: REL, warnings: warnings };
+  }
+  global.HZFData = { build: build, parseCSV: parseCSV, SHEETS: SHEETS };
+})(typeof self !== 'undefined' ? self : this);
+</script>
+
+<!-- visualization -->
+<script>
+let RAW = [], REL = [];
+const COL={dept:'#8b1e3f',act:'#f59e0b',kw:'#10b981',rel:'#d946ef'};
+const TYPECOL={'Projekts':'#f59e0b','Digitālais resurss':'#0ea5e9','Studiju kurss':'#8b5cf6','Cita aktivitāte':'#ec4899','Dalība organizācijā':'#14b8a6'};
+const TYPES=["Projekts","Digitālais resurss","Studiju kurss","Cita aktivitāte","Dalība organizācijā"];
+const $=id=>document.getElementById(id);
+const esc=s=>String(s).replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+
+/* ---------- data loading ---------- */
+function csvUrl(tab){return 'https://docs.google.com/spreadsheets/d/'+encodeURIComponent(CONFIG.SHEET_ID)+'/gviz/tq?tqx=out:csv&sheet='+encodeURIComponent(tab);}
+function showError(html){const l=$('loader');l.classList.add('err');$('loadmsg').innerHTML=html;}
+async function loadData(){
+  const byTab={};
+  await Promise.all(CONFIG.TABS.map(async t=>{
+    const r=await fetch(csvUrl(t),{cache:'no-store'});
+    if(!r.ok) throw new Error('HTTP '+r.status+' — cilne "'+t+'"');
+    const txt=await r.text();
+    if(/^\s*<(!doctype|html)/i.test(txt)) throw new Error('Izklājlapa nav publiski pieejama (saņemts HTML, nevis dati).');
+    byTab[t]=txt;
+  }));
+  return HZFData.build(byTab);
+}
+(function start(){
+  if(!CONFIG.SHEET_ID || CONFIG.SHEET_ID.indexOf('PASTE')===0){
+    showError('Nav norādīts Google izklājlapas ID.<br><br>Atveriet šo HTML failu teksta redaktorā un ievietojiet izklājlapas ID mainīgajā <b>CONFIG.SHEET_ID</b>.');
+    return;
+  }
+  loadData().then(res=>{
+    RAW=res.RAW; REL=res.REL;
+    if(!RAW.length){ showError('Izklājlapā netika atrasti dati.<br><br>Pārbaudiet, vai cilņu nosaukumi sakrīt un vai izklājlapa ir koplietota pareizi.'); return; }
+    if(res.warnings && res.warnings.length) console.warn('HZF data warnings:', res.warnings);
+    $('loader').style.display='none';
+    init();
+  }).catch(err=>{
+    showError('Neizdevās ielādēt datus no Google izklājlapas.<br><br>Pārbaudiet, vai izklājlapa ir koplietota pareizi un vai ID ir pareizs.<br><br><small>'+esc(String(err && err.message || err))+'</small>');
+  });
+})();
+
+/* ---------- visualization (runs once data is loaded) ---------- */
+function init(){
+const nodes=new Map(); const edges=[]; const relEdges=[];
+function addNode(id,label,kind,extra){if(!nodes.has(id))nodes.set(id,Object.assign({id,label,kind,deg:0,x:0,y:0,vx:0,vy:0,vis:true,ord:0},extra||{}));return nodes.get(id);}
+RAW.forEach((a,i)=>{const aid='A::'+i;addNode(aid,a.name,'act',{atype:a.type,depts:a.depts,kws:a.kws,url:a.url||'',idx:i});
+  a.depts.forEach(d=>{addNode('D::'+d,d,'dept');edges.push({a:aid,b:'D::'+d});});
+  a.kws.forEach(k=>{addNode('K::'+k,k,'kw');edges.push({a:aid,b:'K::'+k});});});
+REL.forEach(([i,j])=>relEdges.push({a:'A::'+i,b:'A::'+j}));
+const relFrom=new Map(),relTo=new Map();
+REL.forEach(([i,j])=>{(relFrom.get('A::'+i)||relFrom.set('A::'+i,[]).get('A::'+i)).push('A::'+j);(relTo.get('A::'+j)||relTo.set('A::'+j,[]).get('A::'+j)).push('A::'+i);});
+edges.forEach(e=>{nodes.get(e.a).deg++;nodes.get(e.b).deg++;});
+const adj=new Map(); nodes.forEach(n=>adj.set(n.id,new Set()));
+edges.concat(relEdges).forEach(e=>{adj.get(e.a).add(e.b);adj.get(e.b).add(e.a);});
+const allNodes=[...nodes.values()];
+const cnt={dept:0,act:0,kw:0}; allNodes.forEach(n=>cnt[n.kind]++);
+$('c-dept').textContent=cnt.dept;$('c-act').textContent=cnt.act;$('c-kw').textContent=cnt.kw;$('c-rel').textContent=relEdges.length;
+allNodes.forEach((n,i)=>{const a=i/allNodes.length*Math.PI*2,R=320;n.x=Math.cos(a)*R;n.y=Math.sin(a)*R;});
+function radius(n){let r=({dept:14,act:5,kw:8}[n.kind])+Math.min(n.deg*0.9,16);if(focusDept!=='all'&&n.id===focusDept)r*=1.9;return r;}
+
+[...allNodes].filter(n=>n.kind==='dept').sort((a,b)=>a.label.localeCompare(b.label,'lv')).forEach(n=>{const o=document.createElement('option');o.value=n.id;o.textContent=n.label;$('deptFocus').appendChild(o);});
+const typeState={}; TYPES.forEach(t=>typeState[t]=true);
+TYPES.forEach(t=>{const lab=document.createElement('label');lab.className='toggle';lab.innerHTML='<input type="checkbox" checked><span class="swatch" style="background:'+TYPECOL[t]+'"></span><span style="font-size:13px">'+t+'</span>';lab.querySelector('input').addEventListener('change',e=>{typeState[t]=e.target.checked;rebuild();});$('typeFilters').appendChild(lab);});
+
+let focusDept='all', mode='hier';
+function passes(n){if(n.kind==='dept'&&!$('t-dept').checked)return false;if(n.kind==='act'&&!$('t-act').checked)return false;if(n.kind==='kw'&&!$('t-kw').checked)return false;if(n.kind==='act'&&!typeState[n.atype])return false;return true;}
+function rebuild(){
+  let actIds;
+  if(focusDept==='all')actIds=new Set(allNodes.filter(n=>n.kind==='act').map(n=>n.id));
+  else{const dn=nodes.get(focusDept).label;actIds=new Set(allNodes.filter(n=>n.kind==='act'&&n.depts.includes(dn)).map(n=>n.id));}
+  const keep=new Set();
+  allNodes.forEach(n=>{if(n.kind==='act'&&passes(n)&&actIds.has(n.id))keep.add(n.id);});
+  edges.forEach(e=>{if(keep.has(e.a)){const o=nodes.get(e.b);if(passes(o))keep.add(o.id);}});
+  if(focusDept!=='all'&&$('t-dept').checked)keep.add(focusDept);
+  allNodes.forEach(n=>n.vis=keep.has(n.id));
+  selected=null;clearHi();
+  if(mode==='hier'){layeredLayout();needFit=true;}else{alpha=0.9;needFit=true;}
+}
+function clearHi(){allNodes.forEach(n=>n.hi=undefined);}
+
+function normOrd(n,len){return len>1?n.ord/(len-1):0.5;}
+function bary(layer,neigh){const lens=new Map();neigh.forEach(L=>L.forEach(n=>lens.set(n.id,L.length)));layer.forEach(n=>{let s=0,c=0;adj.get(n.id).forEach(id=>{const m=nodes.get(id);if(!m.vis)return;if(lens.has(id)){s+=normOrd(m,lens.get(id));c++;}});n._bc=c?s/c:normOrd(n,layer.length);});layer.sort((a,b)=>a._bc-b._bc);layer.forEach((n,i)=>n.ord=i);}
+function placeRow(layer,y,span){layer.sort((a,b)=>a.ord-b.ord);const n=layer.length;for(let i=0;i<n;i++){const nd=layer[i];nd.x=n>1?((i/(n-1))-0.5)*span:0;nd.y=y;nd.vx=0;nd.vy=0;}}
+function layeredLayout(){
+  const dep=allNodes.filter(n=>n.vis&&n.kind==='dept');
+  const act=allNodes.filter(n=>n.vis&&n.kind==='act');
+  const kw=allNodes.filter(n=>n.vis&&n.kind==='kw');
+  dep.forEach((n,i)=>n.ord=i);act.forEach((n,i)=>n.ord=i);kw.forEach((n,i)=>n.ord=i);
+  for(let it=0;it<10;it++){bary(act,[dep,kw]);bary(dep,[act]);bary(kw,[act]);}
+  const span=Math.max(dep.length,act.length,kw.length,2)*24;
+  placeRow(dep,-340,span); placeRow(act,0,span); placeRow(kw,360,span);
+}
+
+const cv=$('net'),ctx=cv.getContext('2d');
+let DPR=window.devicePixelRatio||1,W=0,H=0;
+function resize(){const r=cv.getBoundingClientRect();W=r.width;H=r.height;cv.width=Math.max(1,W*DPR);cv.height=Math.max(1,H*DPR);}
+window.addEventListener('resize',resize);
+let scale=1,tx=0,ty=0;
+function toWorld(sx,sy){return{x:(sx-tx)/scale,y:(sy-ty)/scale};}
+function fit(){const vis=allNodes.filter(n=>n.vis);if(!vis.length)return;let a=1e9,b=1e9,c=-1e9,d=-1e9;vis.forEach(n=>{a=Math.min(a,n.x);b=Math.min(b,n.y);c=Math.max(c,n.x);d=Math.max(d,n.y);});const pad=110,bw=c-a+pad*2,bh=d-b+pad*2;scale=Math.min(W/bw,H/bh,1.6);if(!isFinite(scale)||scale<=0)scale=1;tx=W/2-(a+c)/2*scale;ty=H/2-(b+d)/2*scale;}
+let alpha=0.9;const REP=1600,SPRL=70,SPRK=0.025,GRAV=0.015,VD=0.82;
+function tick(){const vis=allNodes.filter(n=>n.vis);for(const n of vis){n.fx=0;n.fy=0;}
+  for(let i=0;i<vis.length;i++){const a=vis[i];for(let j=i+1;j<vis.length;j++){const b=vis[j];let dx=a.x-b.x,dy=a.y-b.y,d2=dx*dx+dy*dy;if(d2<1)d2=1;let d=Math.sqrt(d2);if(d>500)continue;const f=REP/d2*d;const fx=dx/d*f,fy=dy/d*f;a.fx+=fx;a.fy+=fy;b.fx-=fx;b.fy-=fy;}}
+  for(const e of edges.concat(relEdges)){const a=nodes.get(e.a),b=nodes.get(e.b);if(!a.vis||!b.vis)continue;let dx=b.x-a.x,dy=b.y-a.y,d=Math.sqrt(dx*dx+dy*dy)||1;const f=SPRK*(d-SPRL);const fx=dx/d*f,fy=dy/d*f;a.fx+=fx;a.fy+=fy;b.fx-=fx;b.fy-=fy;}
+  for(const n of vis){n.fx+=-n.x*GRAV;n.fy+=-n.y*GRAV;if(n===dragNode)continue;n.vx=(n.vx+n.fx*alpha)*VD;n.vy=(n.vy+n.fy*alpha)*VD;const sp=Math.hypot(n.vx,n.vy);if(sp>30){n.vx*=30/sp;n.vy*=30/sp;}n.x+=n.vx;n.y+=n.vy;}
+  alpha*=0.985;if(alpha<0.02)alpha=0.02;}
+let needFit=true;
+function draw(){
+  ctx.setTransform(DPR,0,0,DPR,0,0);ctx.clearRect(0,0,W,H);
+  ctx.setTransform(DPR*scale,0,0,DPR*scale,tx*DPR,ty*DPR);
+  const vis=allNodes.filter(n=>n.vis);
+  ctx.setLineDash([]);ctx.lineWidth=0.7/scale;
+  for(const e of edges){const a=nodes.get(e.a),b=nodes.get(e.b);if(!a.vis||!b.vis)continue;let on=true;if(selected)on=(e.a===selected||e.b===selected);ctx.strokeStyle=selected?(on?'rgba(148,163,184,.9)':'rgba(226,232,240,.3)'):'rgba(203,213,225,.6)';ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.lineTo(b.x,b.y);ctx.stroke();}
+  if($('t-rel').checked){ctx.setLineDash([5/scale,4/scale]);ctx.lineWidth=1.4/scale;
+    for(const e of relEdges){const a=nodes.get(e.a),b=nodes.get(e.b);if(!a.vis||!b.vis)continue;let on=true;if(selected)on=(e.a===selected||e.b===selected);ctx.strokeStyle=on?'rgba(217,70,239,.85)':'rgba(217,70,239,.18)';const mx=(a.x+b.x)/2,my=(a.y+b.y)/2,off=Math.hypot(b.x-a.x,b.y-a.y)*0.18;ctx.beginPath();ctx.moveTo(a.x,a.y);ctx.quadraticCurveTo(mx,my-off,b.x,b.y);ctx.stroke();}
+    ctx.setLineDash([]);}
+  for(const n of vis){const dim=selected&&!n.hi;const c=dim?'#e5e7eb':(n.kind==='act'?(TYPECOL[n.atype]||COL.act):COL[n.kind]);const r=radius(n);ctx.fillStyle=c;if(n.kind==='dept'){ctx.save();ctx.translate(n.x,n.y);ctx.rotate(Math.PI/4);ctx.fillRect(-r,-r,r*2,r*2);if(focusDept!=='all'&&n.id===focusDept){ctx.lineWidth=3.5/scale;ctx.strokeStyle='#5c1226';ctx.strokeRect(-r,-r,r*2,r*2);}ctx.restore();}else{ctx.beginPath();ctx.arc(n.x,n.y,r,0,Math.PI*2);ctx.fill();}}
+  for(const n of vis){const dim=selected&&!n.hi;if(dim)continue;
+    let show=n.kind==='act'?(n.hi||n===hoverNode):true;
+    if(n.kind==='kw'&&scale<0.4&&!n.hi&&n!==hoverNode)show=false;
+    if(!show)continue;
+    const r=radius(n);ctx.font=(n.kind==='dept'?13:11)+'px -apple-system,Segoe UI,Roboto,sans-serif';ctx.fillStyle=n.kind==='dept'?'#5c1226':'#374151';
+    let lab=n.label;if(lab.length>44)lab=lab.slice(0,43)+'…';
+    if(mode==='hier'){
+      if(n.kind==='dept'){ctx.save();ctx.translate(n.x,n.y-r-5);ctx.rotate(-Math.PI/7);ctx.textAlign='left';ctx.textBaseline='middle';ctx.fillText(lab,4,0);ctx.restore();}
+      else if(n.kind==='kw'){ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(lab,n.x,n.y+r+5);}
+      else{ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(lab,n.x,n.y+r+3);}
+    } else {ctx.textAlign='center';ctx.textBaseline='top';ctx.fillText(lab,n.x,n.y+r+3);}
+  }
+}
+function loop(){if(mode==='force'&&(alpha>0.021||dragNode))tick();if(needFit&&(mode==='hier'||alpha<0.1)){fit();needFit=false;}draw();requestAnimationFrame(loop);}
+
+let dragNode=null,panning=false,panStart=null,downPos=null,moved=false,hoverNode=null,selected=null;
+function nodeAt(sx,sy){const w=toWorld(sx,sy);let best=null,bd=1e9;for(const n of allNodes){if(!n.vis)continue;const r=radius(n)+3;const d=Math.hypot(n.x-w.x,n.y-w.y);if(d<r&&d<bd){bd=d;best=n;}}return best;}
+cv.addEventListener('mousedown',e=>{const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;downPos={sx,sy};moved=false;const n=nodeAt(sx,sy);if(n)dragNode=n;else{panning=true;panStart={x:e.clientX-tx,y:e.clientY-ty};cv.classList.add('grabbing');}});
+window.addEventListener('mousemove',e=>{const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;
+  if(downPos&&Math.hypot(sx-downPos.sx,sy-downPos.sy)>4)moved=true;
+  if(dragNode){const w=toWorld(sx,sy);dragNode.x=w.x;dragNode.y=w.y;dragNode.vx=0;dragNode.vy=0;if(mode==='force')alpha=Math.max(alpha,0.3);}
+  else if(panning){tx=e.clientX-panStart.x;ty=e.clientY-panStart.y;}
+  else{const n=nodeAt(sx,sy);hoverNode=n;const tp=$('tooltip');if(n){tp.style.display='block';tp.style.left=(sx+14)+'px';tp.style.top=(sy+10)+'px';tp.textContent=n.label+(n.kind==='act'?' · '+n.atype:(n.kind==='dept'?' · struktūrvienība':' · tēma'));cv.style.cursor='pointer';}else{tp.style.display='none';cv.style.cursor='grab';}}});
+window.addEventListener('mouseup',()=>{if(dragNode&&!moved)select(dragNode);else if(panning&&!moved){selected=null;clearHi();$('details').style.display='none';}dragNode=null;panning=false;cv.classList.remove('grabbing');downPos=null;});
+cv.addEventListener('wheel',e=>{e.preventDefault();const r=cv.getBoundingClientRect();const sx=e.clientX-r.left,sy=e.clientY-r.top;const w=toWorld(sx,sy);const f=e.deltaY<0?1.12:1/1.12;scale=Math.max(0.12,Math.min(4,scale*f));tx=sx-w.x*scale;ty=sy-w.y*scale;},{passive:false});
+
+function select(n){selected=n.id;const nb=adj.get(n.id);allNodes.forEach(m=>m.hi=(m.id===n.id||nb.has(m.id)));showDetails(n);}
+function centerOn(n){scale=Math.max(scale,0.7);tx=W/2-n.x*scale;ty=H/2-n.y*scale;}
+function showDetails(n){const d=$('details');const kindLabel={dept:'Struktūrvienība',act:n.atype,kw:'DH tēma'}[n.kind];const col={dept:COL.dept,act:(TYPECOL[n.atype]||COL.act),kw:COL.kw}[n.kind];
+  let html='<span class="close" onclick="document.getElementById(\'details\').style.display=\'none\'">×</span>';
+  html+='<span class="tag" style="background:'+col+'">'+esc(kindLabel)+'</span><h3>'+esc(n.label)+'</h3>';
+  if(n.kind==='act'){
+    if(n.depts&&n.depts.length)html+='<div class="grp">Struktūrvienība(s)</div><ul>'+n.depts.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+    if(n.kws&&n.kws.length)html+='<div class="grp">DH tēmas</div><ul>'+n.kws.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+    if(n.url)html+='<div class="grp">Avots</div><a href="'+esc(n.url)+'" target="_blank" rel="noopener" style="display:inline-block;margin-top:2px;color:#2563eb;word-break:break-all;font-size:12px">'+esc(n.url)+' ↗</a>';
+    const par=(relFrom.get(n.id)||[]).map(id=>nodes.get(id).label);
+    const ch=(relTo.get(n.id)||[]).map(id=>nodes.get(id).label);
+    if(par.length)html+='<div class="grp">Saistīts ar projektu</div><ul>'+par.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+    if(ch.length)html+='<div class="grp">Izrietošie resursi / kursi ('+ch.length+')</div><ul>'+ch.map(x=>'<li>'+esc(x)+'</li>').join('')+'</ul>';
+  } else {const conn=[...adj.get(n.id)].map(id=>nodes.get(id)).filter(x=>x.kind==='act');html+='<div class="grp">Saistītās aktivitātes ('+conn.length+')</div><ul>'+conn.slice(0,60).map(x=>'<li>'+esc(x.label)+' <span style="color:#9ca3af">· '+esc(x.atype)+'</span></li>').join('')+'</ul>';}
+  d.innerHTML=html;d.style.display='block';
+}
+
+function buildList(){const by=$('groupBy').value;const body=$('listBody');body.innerHTML='';const groups=new Map();
+  RAW.forEach((a,i)=>{let keys;if(by==='dept')keys=a.depts.length?a.depts:['(nav norādīts)'];else if(by==='type')keys=[a.type];else keys=a.kws.length?a.kws:['(nav tēmas)'];keys.forEach(k=>{if(!groups.has(k))groups.set(k,[]);groups.get(k).push(i);});});
+  const arr=[...groups.entries()].sort((x,y)=>y[1].length-x[1].length||x[0].localeCompare(y[0],'lv'));
+  arr.forEach(([name,idxs])=>{const det=document.createElement('details');det.className='lg';
+    const sw=by==='dept'?'<span class="gswatch diamond" style="background:'+COL.dept+'"></span>':(by==='kw'?'<span class="gswatch" style="background:'+COL.kw+'"></span>':'<span class="gswatch" style="background:'+(TYPECOL[name]||COL.act)+'"></span>');
+    const sum=document.createElement('summary');sum.innerHTML=sw+'<span>'+esc(name)+'</span><span class="gc">'+idxs.length+'</span>';det.appendChild(sum);
+    idxs.sort((p,q)=>RAW[p].name.localeCompare(RAW[q].name,'lv')).forEach(i=>{const a=RAW[i];const row=document.createElement('div');row.className='li';row.innerHTML='<span class="dot" style="background:'+(TYPECOL[a.type]||COL.act)+'"></span><span>'+esc(a.name)+'<br><span style="color:#9ca3af;font-size:11px">'+esc(a.type)+'</span></span>';row.addEventListener('click',()=>{const node=nodes.get('A::'+i);select(node);centerOn(node);});det.appendChild(row);});
+    body.appendChild(det);});}
+$('groupBy').addEventListener('change',buildList);
+$('collapseR').addEventListener('click',()=>{$('rpanel').style.display='none';$('reopenR').style.display='block';resize();});
+$('reopenR').addEventListener('click',()=>{$('rpanel').style.display='flex';$('reopenR').style.display='none';resize();});
+document.querySelectorAll('input[name=layout]').forEach(r=>r.addEventListener('change',e=>{mode=e.target.value;rebuild();}));
+['t-dept','t-act','t-kw'].forEach(id=>$(id).addEventListener('change',rebuild));
+$('t-rel').addEventListener('change',()=>{});
+$('deptFocus').addEventListener('change',e=>{focusDept=e.target.value;rebuild();});
+$('reset').addEventListener('click',()=>{$('t-dept').checked=$('t-act').checked=$('t-kw').checked=$('t-rel').checked=true;TYPES.forEach(t=>typeState[t]=true);document.querySelectorAll('#typeFilters input').forEach(c=>c.checked=true);focusDept='all';$('deptFocus').value='all';selected=null;clearHi();$('details').style.display='none';rebuild();});
+$('zin').onclick=()=>{scale=Math.min(4,scale*1.2);};$('zout').onclick=()=>{scale=Math.max(0.12,scale/1.2);};$('zfit').onclick=()=>{needFit=true;};
+resize();rebuild();buildList();requestAnimationFrame(loop);
+} /* end init() */
+</script>
+</body>
+</html>
